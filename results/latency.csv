@@ -1,0 +1,3 @@
+device,median_ms,runs,warmup,image_size,seed
+cuda,6.768373999875621,200,20,224,0
+cpu,145.37393850059743,200,20,224,0
