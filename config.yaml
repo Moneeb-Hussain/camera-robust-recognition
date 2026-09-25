@@ -35,6 +35,11 @@ files:
   baseline_csv: baselines_seed{seed}.csv
   m1_ckpt: m1_linear_seed{seed}.pt
   m2_ckpt: m2_head_seed{seed}.pt
+  expA_csv: expA_sweeps.csv
+  expB_csv: expB_leaveout.csv
+  latency_csv: latency.csv
+  expA_plot: expA_sweeps.png
+  expB_plot: expB_leaveout.png
 
 groceries:
   repo_url: https://github.com/PhilJd/freiburg_groceries_dataset.git
@@ -80,6 +85,15 @@ eval:
   batch_size: 8
   severities: [0.0, 0.5, 1.0]
   kinds: [moire, geo, photo, noise, blur, combined]
+
+eval_recognition:
+  batch_size: 32
+  kinds: [geo, photo, blur, noise, moire, combined]
+  severities: [0, 0.2, 0.4, 0.6, 0.8, 1.0]
+  leaveout_kinds: [geo, photo, blur, noise, moire]
+  leaveout_severity: 1.0
+  warmup: 20
+  timing_runs: 200
 
 toy:
   images_per_class: 8
