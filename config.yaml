@@ -1,0 +1,68 @@
+# Paths are relative to this file. Scripts take --config and --seed.
+#   python make_toy_images.py --seed 0
+#   python train.py --seed 0
+#   python evaluate.py --seed 0
+#   python plot_training.py --seed 0
+#   python plot_robustness.py --seed 0
+
+device: auto
+
+paths:
+  image_dir: data/groceries
+  toy_dir: data/toy
+  upstream_repo: data/upstream/freiburg_groceries_dataset
+  results_dir: results
+  checkpoint_dir: checkpoints
+  plots_dir: plots
+
+files:
+  toy_csv: toy_seed{seed}.csv
+  train_csv: train_seed{seed}.csv
+  robustness_csv: robustness_seed{seed}.csv
+  checkpoint: invariant_seed{seed}.pt
+  classes_json: classes_seed{seed}.json
+  train_plot: train_seed{seed}.png
+  robustness_plot: robustness_seed{seed}.png
+  splits_json: splits.json
+  captions_json: captions.json
+  class_stats_csv: class_stats.csv
+
+groceries:
+  repo_url: https://github.com/PhilJd/freiburg_groceries_dataset.git
+  dataset_url: http://aisdatasets.informatik.uni-freiburg.de/freiburg_groceries_dataset/freiburg_groceries_dataset.tar.gz
+  kaggle_dataset: mayarmohamedswilam/freiburg-groceries
+  timeout_seconds: 30
+  train_ratio: 0.70
+  val_ratio: 0.10
+  min_train_images: 20
+
+clip:
+  model_name: ViT-B-32
+  pretrained: openai
+  image_size: 224
+  prompt: "a photo of a {name}"
+
+train:
+  epochs: 3
+  batch_size: 8
+  lr_head: 0.001
+  lr_aug: 0.05
+  lam_text: 1.0
+  lam_sem: 5.0
+
+augmentor:
+  ops: [moire, geo, photo, noise, blur]
+  jitter: 0.6
+
+eval:
+  batch_size: 8
+  severities: [0.0, 0.5, 1.0]
+  kinds: [moire, geo, photo, noise, blur, combined]
+
+toy:
+  images_per_class: 8
+  items:
+    - {name: red circle, color: [220, 30, 30], shape: circle}
+    - {name: blue square, color: [30, 60, 220], shape: square}
+    - {name: green triangle, color: [30, 160, 50], shape: triangle}
+    - {name: yellow star, color: [230, 200, 20], shape: star}
