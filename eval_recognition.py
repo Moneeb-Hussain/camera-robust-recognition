@@ -1,4 +1,5 @@
 """Test-set distortion sweeps, leave-one-out, and CLIP-plus-head latency."""
+import csv
 import statistics
 import time
 
@@ -107,6 +108,28 @@ def sweep(model, encoder, module, anchors, loader, kinds, severities, seed, devi
     return rows_from(stats, model, seed)
 
 
+def load_leaveout(path, dim: int, device):
+    """Load one leave-one-out head, or return None when that file is absent."""
+    try:
+        require(path)
+        return load_head(path, dim, device)
+    except (FileNotFoundError, RuntimeError) as exc:
+        print(f"warning: skipping leave-one-out {path.name}: {exc}")
+        return None
+
+
+def write_leaveout(path, rows: list[dict]) -> None:
+    """Write expB even when no leave-one-out checkpoint was found."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = list(rows[0].keys()) if rows else [
+        "held_out", "model", "kind", "severity", "accuracy", "stability", "n_images", "seed",
+    ]
+    with path.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=fieldnames)
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def leaveout_path(cfg: dict, held_out: str):
     """Checkpoint trained with every op except the one being tested."""
     ops = [name for name in cfg["augmentor"]["ops"] if name != held_out]
@@ -171,11 +194,15 @@ def main() -> None:
     sweep_rows = []
     for model, module in modules.items():
         sweep_rows.extend(sweep(model, encoder, module, anchors, loader, kinds, severities, args.seed, device))
+    write_csv(file_in(cfg, "results_dir", "expA_csv", args.seed), sweep_rows)
     leave_rows = []
+    skipped = 0
     for held_out in spec["leaveout_kinds"]:
         path = leaveout_path(cfg, held_out)
-        require(path)
-        dropped = load_head(path, dim, device)
+        dropped = load_leaveout(path, dim, device)
+        if dropped is None:
+            skipped += 1
+            continue
         stats = fresh_stats([held_out], severities)
         for start, (images, labels) in enumerate(loader):
             accumulate(stats, images, labels, "M3", encoder, dropped, anchors, [held_out], severities, args.seed + start, device)
@@ -183,8 +210,7 @@ def main() -> None:
         full = [row for row in sweep_rows if row["model"] == "M3" and row["kind"] == held_out]
         for row in full:
             leave_rows.append({"held_out": held_out, "model": "M3", **{k: v for k, v in row.items() if k != "model"}})
-    write_csv(file_in(cfg, "results_dir", "expA_csv", args.seed), sweep_rows)
-    write_csv(file_in(cfg, "results_dir", "expB_csv", args.seed), leave_rows)
+    write_leaveout(file_in(cfg, "results_dir", "expB_csv", args.seed), leave_rows)
     warmup = int(spec["warmup"])
     runs = int(spec["timing_runs"])
     image_size = int(cfg["clip"]["image_size"])
@@ -207,7 +233,7 @@ def main() -> None:
     announce(
         f"Swept {len(modules)} models on {len(test_set)} test images, {len(kinds)} kinds, {len(severities)} severities.",
         f"CSV: {file_in(cfg, 'results_dir', 'expA_csv', args.seed).name}, {file_in(cfg, 'results_dir', 'expB_csv', args.seed).name}, {latency_path.name}.",
-        f"Median CLIP+head latency: {latency_text}.",
+        f"Median CLIP+head latency: {latency_text}. Leave-one-out skipped: {skipped}.",
     )
 
 
