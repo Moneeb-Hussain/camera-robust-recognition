@@ -286,10 +286,10 @@ def main() -> None:
     device = pick_device(cfg["device"])
     ops = parse_ops(args.ops, cfg)
     names, captions = class_captions(cfg)
-    train_set = load_split(cfg, "train", names)
+    train_dataset = load_split(cfg, "train", names)
     val_set = load_split(cfg, "val", names)
     batch_size = int(cfg["train_ours"]["batch_size"])
-    if len(train_set) < batch_size:
+    if len(train_dataset) < batch_size:
         raise RuntimeError(f"Need at least {batch_size} training images.")
     encoder, tokenizer = build_clip(cfg, device)
     anchors = text_anchors(encoder.model, tokenizer, captions, device)
@@ -298,7 +298,8 @@ def main() -> None:
     opt_head = torch.optim.AdamW(head.parameters(), lr=float(cfg["train_ours"]["lr_head"]))
     opt_aug = torch.optim.Adam(aug.parameters(), lr=float(cfg["train_ours"]["lr_aug"]))
     generator = torch.Generator().manual_seed(args.seed)
-    train_loader = DataLoader(train_set, batch_size=batch_size, shuffle=True, generator=generator, drop_last=True)
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, generator=generator, drop_last=True)
+    print(f"train batches per epoch: {len(train_loader)}, total train images: {len(train_dataset)}")
     val_loader = DataLoader(val_set, batch_size=batch_size, shuffle=False)
     rows = []
     raw_rows = []
