@@ -13,6 +13,7 @@ paths:
   upstream_repo: data/upstream/freiburg_groceries_dataset
   results_dir: results
   checkpoint_dir: checkpoints
+  ckpt_dir: ckpt
   plots_dir: plots
 
 files:
@@ -26,6 +27,8 @@ files:
   splits_json: splits.json
   captions_json: captions.json
   class_stats_csv: class_stats.csv
+  train_ours_csv: train_ours.csv
+  aug_raw_csv: aug_raw.csv
 
 groceries:
   repo_url: https://github.com/PhilJd/freiburg_groceries_dataset.git
@@ -49,6 +52,13 @@ train:
   lr_aug: 0.05
   lam_text: 1.0
   lam_sem: 5.0
+
+train_ours:
+  batch_size: 128
+  epochs: 15
+  lr_head: 0.001
+  lr_aug: 0.05
+  collapse_std: 0.01
 
 augmentor:
   ops: [moire, geo, photo, noise, blur]
