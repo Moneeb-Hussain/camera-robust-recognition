@@ -29,6 +29,12 @@ files:
   class_stats_csv: class_stats.csv
   train_ours_csv: train_ours.csv
   aug_raw_csv: aug_raw.csv
+  anchors_pt: anchors.pt
+  anchors_csv: anchors_seed{seed}.csv
+  feature_cache: clip_train_seed{seed}.pt
+  baseline_csv: baselines_seed{seed}.csv
+  m1_ckpt: m1_linear_seed{seed}.pt
+  m2_ckpt: m2_head_seed{seed}.pt
 
 groceries:
   repo_url: https://github.com/PhilJd/freiburg_groceries_dataset.git
@@ -59,6 +65,12 @@ train_ours:
   lr_head: 0.001
   lr_aug: 0.05
   collapse_std: 0.01
+
+baselines:
+  epochs: 3
+  batch_size: 16
+  lr_probe: 0.01
+  lr_head: 0.001
 
 augmentor:
   ops: [moire, geo, photo, noise, blur]
