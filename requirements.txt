@@ -1,0 +1,8 @@
+torch>=2.2
+open_clip_torch>=2.24
+kornia>=0.7.0
+opencv-python>=4.8
+PyYAML>=6.0
+matplotlib>=3.7
+numpy>=1.24
+kagglehub>=0.3.0
