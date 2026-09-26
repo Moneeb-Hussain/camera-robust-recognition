@@ -16,6 +16,7 @@ paths:
   ckpt_dir: ckpt
   plots_dir: plots
   recapture_dir: recapture_source
+  recapture_photos: recapture_photos
 
 files:
   toy_csv: toy_seed{seed}.csv
@@ -42,6 +43,8 @@ files:
   expA_plot: expA_sweeps.png
   expB_plot: expB_leaveout.png
   recapture_manifest: recapture_manifest.csv
+  recapture_csv: recapture_seed{seed}.csv
+  recapture_detailed_csv: recapture_detailed_seed{seed}.csv
 
 groceries:
   repo_url: https://github.com/PhilJd/freiburg_groceries_dataset.git
