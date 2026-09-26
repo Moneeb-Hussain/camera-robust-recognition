@@ -15,6 +15,7 @@ paths:
   checkpoint_dir: checkpoints
   ckpt_dir: ckpt
   plots_dir: plots
+  recapture_dir: recapture_source
 
 files:
   toy_csv: toy_seed{seed}.csv
@@ -40,6 +41,7 @@ files:
   latency_csv: latency.csv
   expA_plot: expA_sweeps.png
   expB_plot: expB_leaveout.png
+  recapture_manifest: recapture_manifest.csv
 
 groceries:
   repo_url: https://github.com/PhilJd/freiburg_groceries_dataset.git
