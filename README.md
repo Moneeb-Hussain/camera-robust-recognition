@@ -1,6 +1,6 @@
-# Camera-robust grocery recognition
+# Camera-robust recognition
 
-Inspired by TIACam. A frozen CLIP encoder and a small head are trained while an augmentor searches for perspective, colour, blur, noise, and moire that hurt the head. The output is a class name.
+Inspired by [TIACam](#references). A frozen CLIP encoder and a small head are trained while an augmentor searches for perspective, colour, blur, noise, and moire that hurt the head. The output is a class name.
 
 Trained and tested on Freiburg Groceries: 25 classes, 988 test images.
 
@@ -64,7 +64,7 @@ At severity 1.0, from `results/expB_leaveout.csv`. M3-drop was trained with the 
 
 ## Method
 
-The encoder is a frozen OpenAI CLIP ViT-B/32 at 224 px. Its feature space already sits next to text, so the backbone stays fixed. The head is a residual network on those 512-d features, L2-normalized. The augmentor, in the spirit of TIACam, is trained by gradient ascent on the invariance loss: it looks for a setting of perspective, colour, blur, noise, and moire that hurts this head, instead of drawing a random augmentation. Class names are encoded as text anchors and the head is pulled toward the right anchor with cross-entropy. Without that term the head collapses: M3-t0 never leaves 0.032388663967611336 on the test sweep. M2 uses the same head and the same families of distortion, but the augmentation is fixed and random, so the two runs separate the learned search from plain augmentation.
+The encoder is a frozen OpenAI CLIP ViT-B/32 at 224 px. Its feature space already sits next to text, so the backbone stays fixed. The head is a residual network on those 512-d features, L2-normalized. The augmentor, following [TIACam](#references), is trained by gradient ascent on the invariance loss: it looks for a setting of perspective, colour, blur, noise, and moire that hurts this head, instead of drawing a random augmentation. Class names are encoded as text anchors and the head is pulled toward the right anchor with cross-entropy. Without that term the head collapses: M3-t0 never leaves 0.032388663967611336 on the test sweep. M2 uses the same head and the same families of distortion, but the augmentation is fixed and random, so the two runs separate the learned search from plain augmentation.
 
 ## Latency
 
