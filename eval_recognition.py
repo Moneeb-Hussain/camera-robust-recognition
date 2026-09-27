@@ -8,7 +8,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from features import anchor_rows, build_encoders, load_caption_table
-from invariance_core import OPS, InvariantHead, distort
+from invariance_core import InvariantHead, distort
 from kit import announce, base_parser, file_in, load_config, pick_device, project_path, set_seed, write_csv
 from train_baselines import LinearProbe, make_dataset
 
@@ -131,11 +131,16 @@ def write_leaveout(path, rows: list[dict]) -> None:
 
 
 def leaveout_path(cfg: dict, held_out: str):
-    """Checkpoint trained with every op except the one being tested."""
-    ops = [name for name in cfg["augmentor"]["ops"] if name != held_out]
-    if held_out not in OPS:
+    """m3_ plus the other four ops, hyphen-joined, in train_ours --ops order.
+
+    Default training order is config augmentor.ops: moire, geo, photo, noise, blur.
+    Holding out moire therefore opens m3_geo-photo-noise-blur.pt.
+    """
+    order = list(cfg["augmentor"]["ops"])
+    if held_out not in order:
         raise RuntimeError(f"{held_out} is not a learned distortion")
-    return project_path(cfg, cfg["paths"]["ckpt_dir"]) / f"m3_{'-'.join(ops)}.pt"
+    kept = [name for name in order if name != held_out]
+    return project_path(cfg, cfg["paths"]["ckpt_dir"]) / f"m3_{'-'.join(kept)}.pt"
 
 
 def median_ms(encoder, head, device, image_size: int, warmup: int, runs: int) -> float:
@@ -199,6 +204,7 @@ def main() -> None:
     skipped = 0
     for held_out in spec["leaveout_kinds"]:
         path = leaveout_path(cfg, held_out)
+        print(str(path))
         dropped = load_leaveout(path, dim, device)
         if dropped is None:
             skipped += 1
@@ -210,6 +216,9 @@ def main() -> None:
         full = [row for row in sweep_rows if row["model"] == "M3" and row["kind"] == held_out]
         for row in full:
             leave_rows.append({"held_out": held_out, "model": "M3", **{k: v for k, v in row.items() if k != "model"}})
+    print(f"leave-one-out rows: {len(leave_rows)}")
+    for row in leave_rows[:6]:
+        print(row)
     write_leaveout(file_in(cfg, "results_dir", "expB_csv", args.seed), leave_rows)
     warmup = int(spec["warmup"])
     runs = int(spec["timing_runs"])
