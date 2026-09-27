@@ -49,14 +49,6 @@ def draw_sweeps(rows: list[dict], kinds: list[str], dest) -> None:
 
 def draw_leaveout(rows: list[dict], severity: float, dest) -> None:
     """Bars at one severity: full M3 versus the model that never trained on that distortion."""
-    held = list(dict.fromkeys(row["held_out"] for row in rows))
-    full, dropped = [], []
-    for kind in held:
-        full.append(float(next(row["accuracy"] for row in rows if row["held_out"] == kind and row["model"] == "M3" and float(row["severity"]) == severity)))
-        dropped.append(float(next(row["accuracy"] for row in rows if row["held_out"] == kind and row["model"] == "M3-drop" and float(row["severity"]) == severity)))
-    positions = range(len(held))
-    fig, axis = plt.subplots(figsize=(8, 4))
-    width = 0.36
     title_map = {
         "geo": "Geometric",
         "photo": "Photometric",
@@ -64,9 +56,28 @@ def draw_leaveout(rows: list[dict], severity: float, dest) -> None:
         "noise": "Noise",
         "moire": "Moire",
     }
+    kinds = list(dict.fromkeys(row["held_out"] for row in rows))
+    full, dropped = [], []
+    for kind in kinds:
+        full.append(float(next(
+            row["accuracy"] for row in rows
+            if row["held_out"] == kind and row["model"] == "M3" and float(row["severity"]) == severity
+        )))
+        dropped.append(float(next(
+            row["accuracy"] for row in rows
+            if row["held_out"] == kind and row["model"] == "M3-drop" and float(row["severity"]) == severity
+        )))
+    print(f"leave-one-out shape: ({len(rows)}, {len(rows[0]) if rows else 0})")
+    print(full)
+    print(dropped)
+    fig, axis = plt.subplots(figsize=(8, 4))
+    width = 0.36
+    positions = list(range(len(kinds)))
     axis.bar([p - width / 2 for p in positions], full, width=width, label="M3")
     axis.bar([p + width / 2 for p in positions], dropped, width=width, label="M3 (trained without this kind)")
-    axis.set_xticks(list(positions), [title_map[kind] for kind in held])
+    display_labels = [title_map[kind] for kind in kinds]
+    axis.set_xticks(range(len(kinds)))
+    axis.set_xticklabels(display_labels)
     axis.set_ylim(0, 1)
     axis.set_title("Experiment B: Leave-One-Out Ablation (accuracy at severity 1.0)", fontsize=13)
     axis.set_xlabel("Held-Out Distortion Type")
