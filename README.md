@@ -1,6 +1,6 @@
-The question is whether a frozen CLIP encoder and a small head, trained against an augmentor that searches for harmful camera distortions, still names the grocery class when those distortions get strong.
+Camera-robust grocery recognition, inspired by TIACam. A frozen CLIP encoder and a small head are trained while an augmentor searches for perspective, colour, blur, noise, and moire that hurt the head. The output is a class name.
 
-I built five models on Freiburg Groceries (25 classes, 988 test images): M0 is zero-shot CLIP, M1 is a linear probe, M2 is the same head with fixed random augmentation, M3 trains that head against the augmentor, and M3-t0 is M3 with the text loss turned off.
+Five models, Freiburg Groceries, 25 classes, 988 test images. M0 is zero-shot CLIP, M1 is a linear probe, M2 is the same head with fixed random augmentation, M3 trains that head against the augmentor, and M3-t0 is M3 with the text loss turned off.
 
 Clean M3 accuracy is 0.9048582995951417. At combined severity 1.0 it falls to 0.37955465587044535, still above M2 at 0.3643724696356275, M1 at 0.34615384615384615, and M0 at 0.18016194331983806. On 25 phone recaptures M2 is ahead of M3, 0.76 to 0.68.
 
@@ -42,25 +42,17 @@ Leave-one-out at severity 1.0, from `results/expB_leaveout.csv`. M3-drop was tra
 
 ## Method
 
-CLIP ViT-B/32 stays frozen because I am not training a backbone from this grocery set, and its feature space already sits next to text. The head is a residual network on those 512-d features, L2-normalized, so I can adapt the representation to distortion without touching CLIP. The augmentor is trained by gradient ascent on the invariance loss: it looks for a setting of perspective, colour, blur, noise, and moire that actually hurts this head, instead of drawing a random augmentation and hoping it matches a camera. Class names are encoded as text anchors and the head is pulled toward the right anchor with cross-entropy, because without that term the head collapses (M3-t0 never leaves 0.032388663967611336 on the test sweep). M2 uses the same head and the same families of distortion, but the augmentation is fixed and random, so the comparison asks whether the search mattered.
+The encoder is a frozen OpenAI CLIP ViT-B/32 at 224 px. Its feature space already sits next to text, so the backbone stays fixed. The head is a residual network on those 512-d features, L2-normalized. The augmentor, in the spirit of TIACam, is trained by gradient ascent on the invariance loss: it looks for a setting of perspective, colour, blur, noise, and moire that hurts this head, instead of drawing a random augmentation. Class names are encoded as text anchors and the head is pulled toward the right anchor with cross-entropy. Without that term the head collapses: M3-t0 never leaves 0.032388663967611336 on the test sweep. M2 uses the same head and the same families of distortion, but the augmentation is fixed and random, so the two runs separate the learned search from plain augmentation.
 
-## Differences from TIACam
-
-The backbone here is OpenAI CLIP ViT-B/32. Input size is 224 px, not 128 px. There is no discriminator. The head is trained with cross-entropy against text anchors. There is no zero-watermarking head. This project is recognition, not watermarking. The images are Freiburg Groceries, 25 public classes, because my own FYP collection was not available to train on.
-
-Freiburg Groceries: Philipp Jund, Nichola Abdo, Andreas Eitel, Wolfram Burgard. "The Freiburg Groceries Dataset." arXiv:1611.05799, 2016.
-
-## What I'd do differently with more time
-
-I would add an open-set rejection: if the cosine to the nearest class anchor is below a threshold, say unknown instead of forcing a grocery name. I would replace the cross-entropy shortcut with a real transformer discriminator. I would test on household items I own, photographed in the room, instead of only a screen recapture of the Freiburg test images.
+Images: Philipp Jund, Nichola Abdo, Andreas Eitel, Wolfram Burgard. "The Freiburg Groceries Dataset." arXiv:1611.05799, 2016.
 
 ## Latency
 
-Median time for one 224 px image through CLIP and the M3 head, 200 timed runs after 20 warmup runs (`results/latency.csv`): GPU 6.337037500998122 ms, CPU 146.9995760007805 ms. On the FYP conveyor an item is in front of the camera for a short pass, and the GPU number fits that pass while the CPU number does not.
+Median time for one 224 px image through CLIP and the M3 head, 200 timed runs after 20 warmup runs (`results/latency.csv`): GPU 6.337037500998122 ms, CPU 146.9995760007805 ms.
 
 ## Limitations
 
-Exp C used only 25 photos, so an 8-point gap between models is not something to make strong claims about. M3 beats the weak baselines (M0, M1) clearly, and beats M2 on Exp A. On Exp B the full model and the held-out model are close at severity 1.0, and blur is the only held-out kind where full M3 is higher (0.5951417004048583 against 0.5668016194331984). On the real phone recapture M2 was actually a few points ahead of M3, 0.76 against 0.68, and I say that plainly rather than explaining it away. This is a screen recapture, not a live camera on a moving conveyor belt, so it does not fully test the real deployment scenario. The training set is a small public grocery dataset, not a checkout-specific one.
+Exp C used only 25 photos, so an 8-point gap between models is not something to make strong claims about. M3 beats M0 and M1 on the synthetic sweeps, and beats M2 on Exp A. On Exp B the full model and the held-out model are close at severity 1.0, and blur is the only held-out kind where full M3 is higher (0.5951417004048583 against 0.5668016194331984). On the phone recapture M2 is ahead of M3, 0.76 against 0.68. Those photos are a screen recapture, not a live camera, and the training images are a public grocery set.
 
 ## Reproduce
 
