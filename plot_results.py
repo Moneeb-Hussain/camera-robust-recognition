@@ -6,6 +6,14 @@ import matplotlib.pyplot as plt
 from kit import announce, base_parser, file_in, load_config, read_csv, set_seed
 
 PANEL_MODELS = ["M0", "M1", "M2", "M3"]
+TITLE_MAP = {
+    "geo": "Geometric Distortion",
+    "photo": "Photometric Distortion",
+    "blur": "Blur",
+    "noise": "Noise",
+    "moire": "Moire",
+    "combined": "Combined (All Distortions)",
+}
 
 
 def draw_sweeps(rows: list[dict], kinds: list[str], dest) -> None:
@@ -21,16 +29,21 @@ def draw_sweeps(rows: list[dict], kinds: list[str], dest) -> None:
                 marker="o",
                 label=model,
             )
-        axis.set_title(kind)
-        axis.set_xlabel("severity")
+        axis.set_title(TITLE_MAP[kind], fontsize=11)
+        axis.set_xlabel("Distortion Severity")
         axis.set_ylim(0, 1)
         axis.grid(True, alpha=0.3)
-    axes[0, 0].set_ylabel("top-1 accuracy")
-    axes[1, 0].set_ylabel("top-1 accuracy")
+    for axis in axes[:, 0]:
+        axis.set_ylabel("Top-1 Accuracy")
     axes[0, 0].legend(fontsize=8)
+    fig.suptitle(
+        "Experiment A: Top-1 Accuracy vs Distortion Severity (Freiburg Groceries test set)",
+        fontsize=13,
+        y=1.02,
+    )
     fig.tight_layout()
     dest.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(dest, dpi=120)
+    fig.savefig(dest, dpi=120, bbox_inches="tight")
     plt.close(fig)
 
 
@@ -46,14 +59,14 @@ def draw_leaveout(rows: list[dict], severity: float, dest) -> None:
     width = 0.36
     axis.bar([p - width / 2 for p in positions], full, width=width, label="M3")
     axis.bar([p + width / 2 for p in positions], dropped, width=width, label="trained without this kind")
-    axis.set_xticks(list(positions), held)
+    axis.set_xticks(list(positions), [TITLE_MAP[kind] for kind in held])
     axis.set_ylim(0, 1)
     axis.set_ylabel(f"top-1 accuracy at severity {severity}")
     axis.set_xlabel("held-out distortion")
     axis.legend()
     fig.tight_layout()
     dest.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(dest, dpi=120)
+    fig.savefig(dest, dpi=120, bbox_inches="tight")
     plt.close(fig)
 
 
