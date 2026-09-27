@@ -1,6 +1,6 @@
 # Camera-robust recognition
 
-Inspired by [TIACam](#references) (Tanvir, Dasgupta, and Zhong, 2026, cited in References). A frozen CLIP encoder and a small head are trained while an augmentor searches for perspective, colour, blur, noise, and moire that hurt the head. The output is a class name.
+Does an adversarial augmentor and text-anchored CLIP features, the mechanism behind [TIACam](#references)'s camera-robust watermarking (Tanvir, Dasgupta, and Zhong, 2026), also make product recognition hold up under camera distortion? Tested end to end, including a real phone-camera recapture, not just simulation.
 
 Trained and tested on Freiburg Groceries: 25 classes, 988 test images.
 
