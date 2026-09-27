@@ -57,12 +57,20 @@ def draw_leaveout(rows: list[dict], severity: float, dest) -> None:
     positions = range(len(held))
     fig, axis = plt.subplots(figsize=(8, 4))
     width = 0.36
+    title_map = {
+        "geo": "Geometric",
+        "photo": "Photometric",
+        "blur": "Blur",
+        "noise": "Noise",
+        "moire": "Moire",
+    }
     axis.bar([p - width / 2 for p in positions], full, width=width, label="M3")
-    axis.bar([p + width / 2 for p in positions], dropped, width=width, label="trained without this kind")
-    axis.set_xticks(list(positions), [TITLE_MAP[kind] for kind in held])
+    axis.bar([p + width / 2 for p in positions], dropped, width=width, label="M3 (trained without this kind)")
+    axis.set_xticks(list(positions), [title_map[kind] for kind in held])
     axis.set_ylim(0, 1)
-    axis.set_ylabel(f"top-1 accuracy at severity {severity}")
-    axis.set_xlabel("held-out distortion")
+    axis.set_title("Experiment B: Leave-One-Out Ablation (accuracy at severity 1.0)", fontsize=13)
+    axis.set_xlabel("Held-Out Distortion Type")
+    axis.set_ylabel("Top-1 Accuracy at Severity 1.0")
     axis.legend()
     fig.tight_layout()
     dest.parent.mkdir(parents=True, exist_ok=True)
