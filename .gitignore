@@ -6,3 +6,10 @@ checkpoints/
 ckpt/
 recapture_source/
 recapture_photos/
+plots/robustness_seed0.png
+plots/train_seed0.png
+results/anchors_seed0.csv
+results/robustness_seed0.csv
+results/toy_seed0.csv
+results/train_seed0.csv
+train_seed0.csv
