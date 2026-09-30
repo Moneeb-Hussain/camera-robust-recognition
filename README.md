@@ -62,6 +62,39 @@ At severity 1.0, from `results/expB_leaveout.csv`, shown to one decimal place. M
 
 *Accuracy of each model on the 25 photos recaptured with a phone.*
 
+### Experiment E: Semantic Margin Analysis
+
+Does the feature displacement measured in the feature-space run actually damage class separability, or only move the vector? Same 25 matched clean, simulated, and real triplets, same M2 and M3 checkpoints, same frozen CLIP backbone, and the same 25 text anchors.
+
+For every model, image, and condition, the head feature is scored against all 25 anchors. Each sample records the correct-class similarity, the nearest wrong-class similarity, the predicted class, and the semantic margin: correct similarity minus nearest-wrong similarity. Before any of the numbers below were used, real-recapture accuracy from those anchor scores was checked against Experiment C. It matched exactly: M2 76.0%, M3 68.0%.
+
+Mean semantic margin on the 25 triplets:
+
+| Model | Clean | Simulated | Real |
+| --- | --- | --- | --- |
+| M2 | 0.0746 | −0.0327 | 0.0453 |
+| M3 | 0.1673 | −0.0433 | 0.0493 |
+
+Margin drop from the clean image:
+
+| Model | Simulated drop | Real drop | Real drop, relative to clean |
+| --- | --- | --- | --- |
+| M2 | 0.1074 | 0.0294 | ~39% |
+| M3 | 0.2106 | 0.1181 | ~71% |
+
+M3's clean margin is already more than double M2's, so the larger absolute drop on its own is not conclusive. The relative drop, about 71% against about 39%, still has M3 losing proportionally more margin on the phone photos. That lines up with Experiment C, where M2 beat M3 on the real recaptures even though M3 was ahead under simulated distortion.
+
+On the below-median half of the real-recapture distances, ranked by margin drop, one M3 case stands out: `tomato_sauce`. Its clean-to-real distance is below the median (0.119) and the margin falls by about 67%, from 0.262 to 0.088, while the prediction stays correct. A soda sample was left out of that list because it was already wrong on the clean image, so that error is not damage from the shift.
+
+Preliminary, n=25:
+
+- M3 loses more semantic margin than M2 on the real recaptures, in both absolute and relative terms.
+- A small feature shift can still take most of the margin. `tomato_sauce` is one clear case: below-median displacement, majority loss of margin, prediction unchanged. That is one observation, not a pattern.
+- Distance does not by itself explain classification risk. None of the small-displacement cases flipped to a wrong class, but several lost most of their margin, so that erosion is invisible if only accuracy is checked.
+- These are small-sample observations. They are not proof, and they are not a claim that the augmentor overfit.
+
+`analyze_semantic_margin.py`, `check_interesting_cases.py`. Tables and plots: `results/semantic_margin_metrics.csv`, `results/distance_vs_margin_m2.png`, `results/distance_vs_margin_m3.png`, `results/interesting_cases_m2.csv`, `results/interesting_cases_m3.csv`.
+
 ## Method
 
 The encoder is a frozen OpenAI CLIP ViT-B/32 at 224 px. Its feature space already sits next to text, so the backbone stays fixed. The head is a residual network on those 512-d features, L2-normalized. The augmentor, following [TIACam](#references) (Tanvir, Dasgupta, and Zhong, 2026), is trained by gradient ascent on the invariance loss: it looks for a setting of perspective, colour, blur, noise, and moire that hurts this head, instead of drawing a random augmentation. Class names are encoded as text anchors and the head is pulled toward the right anchor with cross-entropy. Without that term the head collapses: M3-t0 never leaves 3.2% on the test sweep. M2 uses the same head and the same families of distortion, but the augmentation is fixed and random, so the two runs separate the learned search from plain augmentation.
